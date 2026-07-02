@@ -13,7 +13,7 @@ let gender = "female";
     const branch = (h === 23) ? 0 : Math.floor((h + 1) / 2) % 12;
     const opt = document.createElement("option");
     opt.value = h;
-    opt.textContent = String(h).padStart(2, "0") + ":00 – " + String(h).padStart(2, "0") + ":59  ·  " + names[branch] + " hour";
+    opt.textContent = String(h).padStart(2, "0") + ":00 to " + String(h).padStart(2, "0") + ":59  ·  " + names[branch] + " hour";
     sel.appendChild(opt);
   }
 })();
@@ -150,7 +150,7 @@ function renderResult(r) {
     ". Cycles marked favorable carry your helpful elements; challenging ones ask more care; mixed ones carry both.</p>";
   html += '<div class="luck-row">';
   for (const l of r.luck) {
-    html += '<div class="luck-cell ' + l.quality + '"><div class="luck-age">' + l.fromAge + "–" + l.toAge + '</div>' +
+    html += '<div class="luck-cell ' + l.quality + '"><div class="luck-age">' + l.fromAge + "-" + l.toAge + '</div>' +
       '<div class="luck-gz">' + STEMS[l.stem].cn + BRANCHES[l.branch].cn + '</div>' +
       '<div class="luck-q">' + l.quality + "</div></div>";
   }

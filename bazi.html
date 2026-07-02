@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BaZi 八字 + 三世书 — Arcana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel:wght@400;500;600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="bazi-page">
+
+<div class="stars" id="stars"></div>
+
+<header class="site-header">
+  <div class="logo" onclick="location.href='index.html'">✦ ARCANA ✦</div>
+  <nav>
+    <button class="nav-btn" onclick="location.href='index.html'">⌂ Home</button>
+    <button class="nav-btn" onclick="location.href='tarot.html'">Tarot</button>
+    <button class="nav-btn" onclick="newChart()">New Chart</button>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- Input -->
+  <section id="step-input" class="step active">
+    <div class="hero">
+      <h1>八字 · The Four Pillars of Destiny</h1>
+      <p class="subtitle">Your birth moment, mapped onto the ancient solar calendar: year, month, day and
+      hour, each a pillar of one Heavenly Stem and one Earthly Branch. From these eight characters (八字)
+      come your Day Master, your element balance, your decade luck cycles, and your 三世书 reading of
+      past, present and future lives.</p>
+    </div>
+
+    <div class="bazi-form">
+      <div class="bf-row">
+        <label>Date of birth (solar / western calendar)</label>
+        <input type="date" id="bz-date" min="1901-01-01" max="2099-12-31">
+      </div>
+      <div class="bf-row">
+        <label>Hour of birth 时辰</label>
+        <select id="bz-hour">
+          <option value="">I don't know my birth hour</option>
+        </select>
+        <p class="bf-hint">The hour completes the fourth pillar. Without it the reading still works,
+        using three pillars, but the hour pillar (children, later years, inner aspirations) is left blank.</p>
+      </div>
+      <div class="bf-row">
+        <label>Gender (used only to set the direction of your luck cycles 大运)</label>
+        <div class="topic-chips">
+          <button class="chip bz-gender selected" data-g="female">Female</button>
+          <button class="chip bz-gender" data-g="male">Male</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="bz-cast">Cast My Pillars →</button>
+      <p class="fine-print">Calculated with true solar terms: the year turns at 立春 (Start of Spring),
+      the month at each 节 (major term), exactly as classical BaZi requires.</p>
+      <p class="bf-error" id="bz-error"></p>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="step-result" class="step">
+    <div id="bazi-result"></div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>BaZi and 三世书 are traditions of reflection and self-knowledge, not a substitute for professional
+  medical, legal, or financial advice. The insight is yours; the calendar only helps you find it.</p>
+</footer>
+
+<script src="vendor/calendar.js"></script>
+<script src="bazi-data.js"></script>
+<script src="bazi-engine.js"></script>
+<script src="bazi-app.js"></script>
+</body>
+</html>

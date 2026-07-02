@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcana. Tarot Readings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<header class="site-header">
+  <div class="logo" onclick="goHome()">✦ ARCANA ✦</div>
+  <nav>
+    <button class="nav-btn" onclick="location.href='index.html'">⌂ Home</button>
+    <button class="nav-btn" id="nav-reading" onclick="goHome()">New Reading</button>
+    <button class="nav-btn" id="nav-journal" onclick="showJournal()">Journal</button>
+    <button class="nav-btn" id="nav-library" onclick="showLibrary()">Card Library</button>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- STEP 1: Question -->
+  <section id="step-question" class="step active">
+    <div class="hero">
+      <h1>What weighs on your mind?</h1>
+      <p class="subtitle">The cards respond best to a focused question. Ask about a situation,
+      a choice, or a feeling. The more specific, the more precise the reading.</p>
+    </div>
+    <div class="question-box">
+      <textarea id="question-input" rows="3" maxlength="300"
+        placeholder="e.g. “What should I understand about my relationship with J?” or “How can I move forward in my career this year?”"></textarea>
+      <div class="topic-row">
+        <span class="topic-label">Focus of your question:</span>
+        <div class="topic-chips" id="topic-chips">
+          <button class="chip" data-topic="general">General</button>
+          <button class="chip" data-topic="love">Love</button>
+          <button class="chip" data-topic="career">Career</button>
+          <button class="chip" data-topic="money">Money</button>
+          <button class="chip" data-topic="health">Wellbeing</button>
+          <button class="chip" data-topic="spiritual">Spiritual</button>
+        </div>
+      </div>
+      <p class="topic-hint" id="topic-hint"></p>
+      <button class="btn-primary" id="btn-to-spread">Choose Your Spread →</button>
+      <p class="fine-print">Or press Enter after typing your question.</p>
+    </div>
+  </section>
+
+  <!-- STEP 2: Spread -->
+  <section id="step-spread" class="step">
+    <div class="hero">
+      <h1>Choose your spread</h1>
+      <p class="subtitle" id="spread-suggestion"></p>
+    </div>
+    <div class="spread-grid" id="spread-grid"></div>
+    <button class="btn-ghost" onclick="showStep('step-question')">← Back</button>
+  </section>
+
+  <!-- STEP 3: Card selection -->
+  <section id="step-select" class="step">
+    <div class="hero compact">
+      <h1 id="select-title">Select your cards</h1>
+      <p class="subtitle" id="select-instruction"></p>
+    </div>
+    <div class="focus-reminder" id="focus-reminder"></div>
+    <div class="deck-fan" id="deck-fan"></div>
+    <div class="picked-row" id="picked-row"></div>
+    <button class="btn-ghost" onclick="startSpreadSelection()">↺ Reshuffle</button>
+  </section>
+
+  <!-- STEP 4: Reading -->
+  <section id="step-reading" class="step">
+    <div id="reading-container"></div>
+  </section>
+
+  <!-- Journal -->
+  <section id="step-journal" class="step">
+    <div class="hero"><h1>Your Reading Journal</h1>
+      <p class="subtitle">Past readings are saved privately in this browser. Revisit them to see how the cards' guidance unfolded.</p>
+    </div>
+    <div id="journal-list"></div>
+  </section>
+
+  <!-- Library -->
+  <section id="step-library" class="step">
+    <div class="hero"><h1>Card Library</h1>
+      <p class="subtitle">All 78 cards of the Rider-Waite-Smith tradition. Click any card to study its meanings.</p>
+    </div>
+    <div class="library-filters" id="library-filters">
+      <button class="chip lib-chip selected" data-arcana="all">All</button>
+      <button class="chip lib-chip" data-arcana="major">Major Arcana</button>
+      <button class="chip lib-chip" data-arcana="wands">Wands</button>
+      <button class="chip lib-chip" data-arcana="cups">Cups</button>
+      <button class="chip lib-chip" data-arcana="swords">Swords</button>
+      <button class="chip lib-chip" data-arcana="pentacles">Pentacles</button>
+    </div>
+    <div class="library-grid" id="library-grid"></div>
+  </section>
+
+</main>
+
+<div class="modal-overlay" id="card-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card" id="modal-content"></div>
+</div>
+
+<footer class="site-footer">
+  <p>Tarot is a tool for reflection and self-inquiry, not a substitute for professional medical,
+  legal, or financial advice. The insight is yours. The cards only help you find it.</p>
+</footer>
+
+<script src="data/cards-major.js"></script>
+<script src="data/cards-wands.js"></script>
+<script src="data/cards-cups.js"></script>
+<script src="data/cards-swords.js"></script>
+<script src="data/cards-pentacles.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

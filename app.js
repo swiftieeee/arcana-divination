@@ -1,5 +1,5 @@
 // ============================================================
-// ARCANA — App flow: question → spread → pick cards → reading
+// ARCANA. App flow: question → spread → pick cards → reading
 // ============================================================
 
 const state = {
@@ -26,7 +26,7 @@ const SUIT_OF = { wands: "wand", cups: "cup", swords: "sword", pentacles: "penta
 // Drop your own images in images/cards/ named to match cardSlug() below
 // (see images/cards/filenames.txt for the exact list of 78 names).
 // Any card without a matching file automatically falls back to the
-// generated illustration below — nothing breaks if you replace only some.
+// generated illustration below. Nothing breaks if you replace only some.
 const CARD_IMAGE_EXT = "jpg"; // change to "png" or "webp" if that's what you're uploading
 
 function cardSlug(card) {
@@ -107,7 +107,7 @@ qInput.addEventListener("input", () => {
   const detected = detectTopic(qInput.value);
   setTopic(detected, false);
   topicHint.textContent = detected !== "general"
-    ? "✦ The cards sense a question of " + TOPICS[detected].label.toLowerCase() + " — change the focus above if that's not right."
+    ? "✦ The cards sense a question of " + TOPICS[detected].label.toLowerCase() + ". Change the focus above if that's not right."
     : "";
 });
 qInput.addEventListener("keydown", e => {
@@ -125,7 +125,7 @@ function toSpreadStep() {
 function renderSpreadGrid() {
   const suggested = suggestSpread(state.question, state.topic);
   document.getElementById("spread-suggestion").textContent = state.question
-    ? "Based on how you phrased your question, the cards suggest “" + SPREADS[suggested].name + "” — but the choice is yours."
+    ? "Based on how you phrased your question, the cards suggest “" + SPREADS[suggested].name + "”, but the choice is yours."
     : "Each spread suits a different kind of question.";
   const grid = document.getElementById("spread-grid");
   grid.innerHTML = "";
@@ -149,7 +149,7 @@ function shuffleDeck() {
     card,
     orient: Math.random() < 0.33 ? "rev" : "up"   // ~1/3 reversed, as in a well-mixed deck
   }));
-  // Fisher–Yates with crypto randomness — a genuinely fair shuffle
+  // Fisher-Yates with crypto randomness. A genuinely fair shuffle
   const rand = new Uint32Array(deck.length);
   crypto.getRandomValues(rand);
   for (let i = deck.length - 1; i > 0; i--) {
@@ -195,7 +195,7 @@ function updateInstruction() {
   const left = spread.count - state.picked.length;
   document.getElementById("select-instruction").textContent = left > 0
     ? "The deck has been shuffled. Choose " + left + " more " + (left === 1 ? "card" : "cards") +
-      " — let your hand drift to the ones that pull at you."
+      ". Let your hand drift to the ones that pull at you."
     : "Your cards are chosen.";
 }
 
@@ -250,10 +250,12 @@ function renderReading(r, container, animate) {
   html += '<p class="reading-date">' + new Date(r.date).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" }) + "</p></div>";
 
   html += '<p class="reading-opening">' + escapeHTML(r.opening) + "</p>";
+  if (r.guide) html += '<p class="reading-guide">' + escapeHTML(r.guide) + "</p>";
 
   if (r.verdict) {
     html += '<div class="verdict"><div class="verdict-answer">' + r.verdict.verdict + "</div><p>" + escapeHTML(r.verdict.text) + "</p></div>";
   }
+  if (r.flow) html += '<div class="reading-flow"><h4>✦ The Arc of Your Spread</h4><p>' + escapeHTML(r.flow) + "</p></div>";
 
   html += '<div class="reading-cards">';
   r.cards.forEach((c, i) => {
@@ -265,14 +267,17 @@ function renderReading(r, container, animate) {
     html += '<h3>' + escapeHTML(c.name) + (c.orient === "rev" ? ' <span class="rev-tag">Reversed</span>' : "") + "</h3>";
     html += '<div class="rc-keywords">' + c.keywords.map(k => "<span>" + escapeHTML(k) + "</span>").join("") + "</div>";
     html += '<p class="rc-frame">' + escapeHTML(c.frame) + "</p>";
+    if (c.about) html += '<p class="rc-about">' + escapeHTML(c.about) + "</p>";
     html += "<p>" + escapeHTML(c.body) + "</p>";
+    if (c.orientNote) html += "<p>" + escapeHTML(c.orientNote) + "</p>";
+    if (c.forYou) html += '<div class="rc-foryou"><h5>✦ For Your Question</h5><p>' + escapeHTML(c.forYou) + "</p></div>";
     html += "</div></div>";
   });
   html += "</div>";
 
   if (r.synthesis.length) {
     html += '<div class="synthesis"><h2>Reading the Cards Together</h2>';
-    html += '<p class="synth-intro">A reading is more than its cards — the patterns across them carry their own message:</p>';
+    html += '<p class="synth-intro">A reading is more than its cards. The patterns across them carry their own message:</p>';
     r.synthesis.forEach(s => {
       html += '<div class="synth-note"><h4>✦ ' + escapeHTML(s.title) + "</h4><p>" + escapeHTML(s.text) + "</p></div>";
     });
@@ -291,12 +296,18 @@ function renderReading(r, container, animate) {
 
 function copyReading() {
   const r = state.reading; if (!r) return;
-  let txt = "ARCANA TAROT READING — " + new Date(r.date).toLocaleString() + "\n";
+  let txt = "ARCANA TAROT READING, " + new Date(r.date).toLocaleString() + "\n";
   if (r.question) txt += "Question: " + r.question + "\n";
   txt += SPREADS[r.spreadKey].name + " · " + TOPICS[r.topic].label + "\n\n" + r.opening + "\n\n";
   if (r.verdict) txt += "VERDICT: " + r.verdict.verdict + "\n" + r.verdict.text + "\n\n";
+  if (r.flow) txt += "THE ARC OF YOUR SPREAD\n" + r.flow + "\n\n";
   r.cards.forEach(c => {
-    txt += "— " + c.position + ": " + c.name + (c.orient === "rev" ? " (Reversed)" : "") + "\n" + c.body + "\n\n";
+    txt += "* " + c.position + ": " + c.name + (c.orient === "rev" ? " (Reversed)" : "") + "\n";
+    if (c.about) txt += c.about + "\n";
+    txt += c.body + "\n";
+    if (c.orientNote) txt += c.orientNote + "\n";
+    if (c.forYou) txt += "For your question: " + c.forYou + "\n";
+    txt += "\n";
   });
   r.synthesis.forEach(s => { txt += "✦ " + s.title + "\n" + s.text + "\n\n"; });
   txt += r.closing + "\n";
@@ -320,7 +331,7 @@ function showJournal() {
   let journal = [];
   try { journal = JSON.parse(localStorage.getItem("arcana_journal") || "[]"); } catch (e) {}
   if (!journal.length) {
-    list.innerHTML = '<p class="empty-note">No readings yet. Your readings are saved here automatically — private to this browser.</p>';
+    list.innerHTML = '<p class="empty-note">No readings yet. Your readings are saved here automatically. Private to this browser.</p>';
   } else {
     list.innerHTML = journal.map((r, i) =>
       '<div class="journal-entry" data-i="' + i + '">' +

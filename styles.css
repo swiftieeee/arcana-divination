@@ -206,9 +206,19 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
 .reading-head h1 { font-family: var(--display); font-weight: 500; color: var(--gold-bright); font-size: 2.2rem; }
 .reading-date { color: #6f6590; font-size: 0.9rem; margin-top: 6px; }
 .reading-opening {
-  max-width: 720px; margin: 0 auto 30px; text-align: center; font-size: 1.12rem;
+  max-width: 720px; margin: 0 auto 18px; text-align: center; font-size: 1.12rem;
   color: var(--ink); font-style: italic;
 }
+.reading-guide {
+  max-width: 720px; margin: 0 auto 30px; text-align: center;
+  color: var(--ink-dim); font-size: 0.98rem;
+}
+.reading-flow {
+  max-width: 760px; margin: 0 auto 34px; background: var(--panel);
+  border: 1px solid rgba(139,111,208,0.3); border-radius: 16px; padding: 22px 26px;
+}
+.reading-flow h4 { font-family: var(--display); font-weight: 500; color: var(--gold); font-size: 1rem; letter-spacing: 0.06em; margin-bottom: 6px; }
+.reading-flow p { color: var(--ink); }
 .verdict {
   max-width: 560px; margin: 0 auto 34px; text-align: center;
   background: var(--panel); border: 1px solid var(--gold); border-radius: 16px; padding: 24px 28px;
@@ -238,7 +248,20 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
 }
 .rc-keywords strong { color: var(--ink-dim); font-size: 0.85rem; margin-right: 4px; }
 .rc-frame { color: #8d82ad; font-style: italic; font-size: 0.95rem; margin-bottom: 10px; }
-.rc-text p { color: var(--ink); }
+.rc-text p { color: var(--ink); margin-bottom: 12px; }
+.rc-about {
+  color: var(--ink-dim); font-size: 0.98rem;
+  border-left: 2px solid rgba(212,175,106,0.4); padding-left: 14px;
+}
+.rc-foryou {
+  margin-top: 14px; background: rgba(139,111,208,0.1);
+  border: 1px solid rgba(139,111,208,0.28); border-radius: 12px; padding: 16px 18px;
+}
+.rc-foryou h5 {
+  font-family: var(--display); font-weight: 500; color: var(--gold);
+  font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 6px;
+}
+.rc-foryou p { margin-bottom: 0 !important; }
 
 .synthesis {
   background: linear-gradient(160deg, var(--panel2), var(--panel));

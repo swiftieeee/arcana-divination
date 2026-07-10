@@ -255,6 +255,9 @@ function renderReading(r, container, animate) {
   if (r.verdict) {
     html += '<div class="verdict"><div class="verdict-answer">' + r.verdict.verdict + "</div><p>" + escapeHTML(r.verdict.text) + "</p></div>";
   }
+  if (r.answer) {
+    html += '<div class="direct-answer"><h4>' + escapeHTML(r.answer.title) + "</h4><p>" + escapeHTML(r.answer.text) + "</p></div>";
+  }
   if (r.flow) html += '<div class="reading-flow"><h4>✦ The Arc of Your Spread</h4><p>' + escapeHTML(r.flow) + "</p></div>";
 
   html += '<div class="reading-cards">';
@@ -284,6 +287,14 @@ function renderReading(r, container, animate) {
     html += "</div>";
   }
 
+  if (r.plain && r.plain.length) {
+    html += '<div class="plain-words"><h2>In Plain Words</h2><p class="synth-intro">The whole reading, stripped of its robes:</p>';
+    r.plain.forEach(row => {
+      html += '<div class="pw-row"><div class="pw-label">' + escapeHTML(row.label) + '</div><div class="pw-text">' + escapeHTML(row.text) + "</div></div>";
+    });
+    html += "</div>";
+  }
+
   html += '<div class="closing"><h2>To Carry With You</h2><p>' + escapeHTML(r.closing) + "</p></div>";
 
   html += '<div class="reading-actions">' +
@@ -300,6 +311,7 @@ function copyReading() {
   if (r.question) txt += "Question: " + r.question + "\n";
   txt += SPREADS[r.spreadKey].name + " · " + TOPICS[r.topic].label + "\n\n" + r.opening + "\n\n";
   if (r.verdict) txt += "VERDICT: " + r.verdict.verdict + "\n" + r.verdict.text + "\n\n";
+  if (r.answer) txt += "THE CARDS' ANSWER\n" + r.answer.text + "\n\n";
   if (r.flow) txt += "THE ARC OF YOUR SPREAD\n" + r.flow + "\n\n";
   r.cards.forEach(c => {
     txt += "* " + c.position + ": " + c.name + (c.orient === "rev" ? " (Reversed)" : "") + "\n";
@@ -310,6 +322,11 @@ function copyReading() {
     txt += "\n";
   });
   r.synthesis.forEach(s => { txt += "✦ " + s.title + "\n" + s.text + "\n\n"; });
+  if (r.plain && r.plain.length) {
+    txt += "IN PLAIN WORDS\n";
+    r.plain.forEach(row => { txt += "- " + row.label + ": " + row.text + "\n"; });
+    txt += "\n";
+  }
   txt += r.closing + "\n";
   navigator.clipboard.writeText(txt).then(() => {
     const btn = document.querySelector(".reading-actions .btn-ghost");

@@ -39,6 +39,231 @@ function isYesNoQuestion(question) {
 }
 
 // ------------------------------------------------------------
+// Question intelligence: understand WHAT is being asked so the
+// reading can answer it directly instead of speaking in general.
+// ------------------------------------------------------------
+
+// Flip first person to second person so the cards can talk about
+// "your relationship" instead of parroting "my relationship".
+function flipPronouns(text) {
+  return text
+    .replace(/\bi'm\b/gi, "you're")
+    .replace(/\bi've\b/gi, "you've")
+    .replace(/\bi'll\b/gi, "you'll")
+    .replace(/\bam i\b/gi, "you are")
+    .replace(/\bi am\b/gi, "you are")
+    .replace(/\bi\b/g, "you")
+    .replace(/\bI\b/g, "you")
+    .replace(/\bmy\b/gi, "your")
+    .replace(/\bme\b/gi, "you")
+    .replace(/\bmine\b/gi, "yours")
+    .replace(/\bmyself\b/gi, "yourself")
+    .replace(/\bwe\b/gi, "the two of you")
+    .replace(/\bour\b/gi, "your shared")
+    .replace(/\bus\b/gi, "the two of you");
+}
+
+function parseQuestion(question) {
+  const raw = (question || "").trim().replace(/\?+$/, "");
+  const q = raw.toLowerCase();
+  if (!q) return { intent: "none", subject: "", raw: "" };
+
+  // Capture the leading auxiliary so questions can be restated grammatically
+  const auxMatch = q.match(/^(will|would|should|shall|can|could|does|do|is|are|am|has|have|did|was|were)\b/);
+  let aux = auxMatch ? auxMatch[1] : "";
+  if (aux === "am") aux = "are";
+
+  let intent = "general";
+  if (/^when\b|\bwhen will\b|\bhow long\b|\bhow soon\b/.test(q)) intent = "when";
+  else if (/^why\b/.test(q)) intent = "why";
+  else if (/^how (do|can|should|could|will) i\b|^how to\b|^what should i do\b|^what can i do\b/.test(q)) intent = "how";
+  else if (/(how|what) does .{1,40}(feel|think)|does .{1,40}(like|love|miss|want|care about) me\b|\bfeelings for me\b|\binto me\b|\bthink of me\b/.test(q)) intent = "feelings";
+  else if (/^should\b|^is it (a good idea|wise|right|worth|time)\b|\bor not\b|\bworth it\b/.test(q)) intent = "should";
+  else if (/^(will|am i going to)\b|\bgoing to\b|\bwill it\b|\bwill (he|she|they|we)\b/.test(q)) intent = "will";
+  else if (/^what\b/.test(q)) intent = "what";
+  else if (/^(is|are|does|do|can|could|would|has|have)\b/.test(q)) intent = "state";
+
+  // Extract the subject clause: strip the interrogative machinery, keep the substance
+  let subject = raw
+    .replace(/^when (will|is|are|do|does|can|should)\s+/i, "")
+    .replace(/^(will|would|should|shall|can|could|does|do|is|are|am|has|have|did|was|were)\s+/i, "")
+    .replace(/^how (do|can|should|could|will) (i|we)\s+/i, "")
+    .replace(/^how to\s+/i, "")
+    .replace(/^what should (i|we) do about\s+/i, "")
+    .replace(/^what (is|are|will|does|do)\s+/i, "")
+    .replace(/^why (is|are|do|does|did|am|can'?t|won'?t)\s+/i, "")
+    .trim();
+  subject = flipPronouns(subject);
+  // "i quit my job" was stripped of aux, so subject may start with "you": tidy for "whether" phrasing
+  const whetherClause = subject.replace(/^you\s+/i, "you ").replace(/^to\s+/i, "");
+
+  // A grammatically safe restatement: "will your relationship grow stronger"
+  const restated = aux ? aux + " " + subject : "";
+
+  return { intent, subject, whetherClause, restated, raw };
+}
+
+// Traditional suit timing, used for "when" questions
+const SUIT_TIMING = {
+  wands: "fast. Wands answer in days to a couple of weeks; this is the quickest suit in the deck",
+  swords: "swift. Swords answer in weeks; things move once the decisive conversation or decision happens",
+  cups: "gradual. Cups answer in weeks to months; feelings ripen at their own pace and resist forcing",
+  pentacles: "slow and solid. Pentacles answer in months to seasons; what arrives on this timing tends to last",
+  major: "not on calendar time. Major Arcana tie timing to readiness: this arrives when its lesson completes, and the advice cards tell you how to complete it faster"
+};
+
+function timingOf(card) {
+  return card.arcana === "major" ? SUIT_TIMING.major : SUIT_TIMING[card.arcana];
+}
+
+// Compose a direct, human answer to the user's actual question.
+function buildDirectAnswer(parsed, drawn, spread, topic) {
+  if (!parsed.raw || parsed.intent === "none") return null;
+
+  const polAvg = drawn.reduce((s, d) => s + polOf(d), 0) / drawn.length;
+  const yesScore = drawn.reduce((s, d) => {
+    const v = d.orient === "up" ? d.card.yesNo.up : d.card.yesNo.rev;
+    return s + (v === "yes" ? 1 : v === "no" ? 0 : 0.5);
+  }, 0) / drawn.length;
+
+  const name = d => d.card.name + (d.orient === "rev" ? " reversed" : "");
+  const kw = d => (d.orient === "up" ? d.card.keywords.up : d.card.keywords.rev).slice(0, 2).join(" and ");
+  const adviceOf = d => d.orient === "up" ? d.card.advice.up : d.card.advice.rev;
+
+  const lensCard = lens => {
+    const i = spread.positions.findIndex(p => p.lens === lens);
+    return i >= 0 ? drawn[i] : null;
+  };
+  const futureCard = lensCard("outcome") || lensCard("future") || drawn[drawn.length - 1];
+  const obstacleCard = lensCard("obstacle") || lensCard("hidden");
+  const adviceCard = lensCard("advice") || drawn.reduce((a, b) => polOf(b) > polOf(a) ? b : a);
+  const presentCard = lensCard("present") || lensCard("core") || drawn[0];
+
+  let text = "";
+  switch (parsed.intent) {
+    case "will": {
+      const ask = parsed.restated ? "You asked: " + parsed.restated + "? " : "You asked whether this will happen. ";
+      if (yesScore >= 0.72 && polAvg >= 0.6)
+        text = ask + "The cards lean clearly toward yes. " +
+          name(futureCard) + " sits in the forward position, carrying " + kw(futureCard) + ", which is exactly the energy your question hopes for. " +
+          (obstacleCard ? "The one thing that could undermine it is what " + name(obstacleCard) + " describes, so treat that card's section below as the fine print on this yes. " : "") +
+          "Keep doing what invites this and let it arrive.";
+      else if (yesScore >= 0.55)
+        text = ask + "The cards lean yes, but it is a conditional yes, not a free one. " +
+          name(futureCard) + " shows the direction bending your way, with " + kw(futureCard) + " ahead. The condition is named by " +
+          (obstacleCard ? name(obstacleCard) + ": until what it describes is dealt with, the yes stays on hold. " : name(adviceCard) + ": its counsel is what converts maybe into yes. ") +
+          "In plain terms: yes, if you do your part, and the cards below spell out exactly what your part is.";
+      else if (yesScore > 0.42)
+        text = ask + "The honest answer from this spread is that it is not decided yet, and pretending otherwise would be a lie. The cards are genuinely split, which in tarot means the outcome is still being written by choices not yet made. The deciding factor looks like " +
+          (obstacleCard ? "what " + name(obstacleCard) + " describes" : "the counsel of " + name(adviceCard)) + ": handle that well and this tips toward yes; leave it alone and it drifts toward no. You have more influence over this answer than the question assumes.";
+      else if (yesScore > 0.28)
+        text = ask + "On the current course, the cards lean no, and it is kinder to say that plainly than to soften it. " +
+          name(futureCard) + " shows " + kw(futureCard) + " ahead if nothing changes. But note the phrase 'current course': " +
+          (adviceCard ? name(adviceCard) + " tells you what a different course looks like, and that is where whatever chance remains actually lives." : "the earlier cards show where the course could still be bent.");
+      else
+        text = ask + "The cards answer no, clearly and from more than one direction. " +
+          name(futureCard) + " closes the door on the version of this you asked about. Painful as it is, a clear no from tarot is usually protective: read " +
+          (obstacleCard ? name(obstacleCard) : "the harder cards below") + " for what you are being protected from, and " + name(adviceCard) + " for where your energy will actually be repaid.";
+      break;
+    }
+    case "should": {
+      const ask = parsed.restated ? "You asked: " + parsed.restated + "? " : "You asked whether you should. ";
+      if (polAvg >= 0.8)
+        text = ask + "The cards say go. The spread is genuinely favorable, and the strongest voice in it, " + name(adviceCard) + ", counsels: " + adviceOf(adviceCard) + " When a spread this supportive appears over a decision, hesitation is usually the only remaining risk.";
+      else if (polAvg >= 0.1)
+        text = ask + "The cards say yes, but carefully, on your terms and with eyes open. " + name(adviceCard) + " carries the operative counsel: " + adviceOf(adviceCard) + " " +
+          (obstacleCard ? "And " + name(obstacleCard) + " marks the trap to step around while you do it. " : "") +
+          "This is a green light with a speed limit, not an open road.";
+      else if (polAvg >= -0.6)
+        text = ask + "The cards counsel waiting, not because the answer is no, but because the conditions are not ready. Something in the spread, especially " + (obstacleCard ? name(obstacleCard) : name(presentCard)) + ", needs to resolve first. Revisit this decision once that piece moves; deciding now means deciding with the least information you will ever have about it.";
+      else
+        text = ask + "The cards advise against it, at least in the form you are currently imagining. The spread carries real warning energy, and " + name(futureCard) + " shows where the current version of this plan leads. That is not a verdict on the goal itself: " + name(adviceCard) + " suggests the shape a better version would take. Change the plan, not necessarily the dream.";
+      break;
+    }
+    case "how": {
+      const steps = [];
+      const seen = new Set();
+      for (const d of [adviceCard, presentCard, futureCard]) {
+        if (d && !seen.has(d.card.id)) { seen.add(d.card.id); steps.push({ d, a: adviceOf(d) }); }
+      }
+      text = "You asked how, so here is the cards' working plan, in order. First, from " + name(steps[0].d) + ": " + steps[0].a;
+      if (steps[1]) text += " Then, from " + name(steps[1].d) + ": " + steps[1].a;
+      if (steps[2]) text += " And to hold the direction, from " + name(steps[2].d) + ": " + steps[2].a;
+      text += " Everything below explains why these three moves fit your situation specifically.";
+      break;
+    }
+    case "feelings": {
+      const cupsish = drawn.filter(d => d.card.arcana === "cups" || (d.card.arcana === "major" && [6, 2, 17, 19].includes(d.card.number)));
+      const heart = cupsish.length ? cupsish.reduce((a, b) => Math.abs(polOf(b)) > Math.abs(polOf(a)) ? b : a) : presentCard;
+      const hp = polOf(heart);
+      text = "You asked about someone's feelings, and the card carrying the emotional signal in this spread is " + name(heart) + ". ";
+      if (hp >= 1) text += "Its message is warm: the feeling on the other side is real, and the currents are " + kw(heart) + ". What the spread suggests is that the feeling is not the problem; expression and timing are. " + (obstacleCard ? name(obstacleCard) + " names what keeps it from being shown more plainly." : "Give it room to be shown, and it will be.");
+      else if (hp <= -1) text += "Its message asks for honesty with yourself: the emotional currents here run through " + kw(heart) + ", which is not the answer a hoping heart wants. That does not always mean absence of feeling; it can mean feeling that is blocked, conflicted or unavailable right now. Either way, the practical counsel is the same: watch what they do, not what you hope, and reread " + name(adviceCard) + " below for how to protect your own heart while you find out.";
+      else text += "Its message is genuinely mixed: something is felt, and something is unresolved, both at once. The currents are " + kw(heart) + ". Mixed signals usually mean a person who has not decided, and no reading can decide for them. What you control is named by " + name(adviceCard) + ": " + adviceOf(adviceCard);
+      break;
+    }
+    case "when": {
+      text = "You asked when. Tarot tells time by the nature of the cards rather than by dates, and the timing card of this spread is " + name(futureCard) + ". Its tempo is " + timingOf(futureCard.card) + ". ";
+      if (obstacleCard) text += "One caution: " + name(obstacleCard) + " suggests the clock does not start until what it describes is addressed. The timeline is partly in your hands, which is better news than a fixed date would be.";
+      else text += "Cooperate with that tempo rather than forcing a faster one, and the arrival tends to come at the early end of the range.";
+      break;
+    }
+    case "why": {
+      const root = lensCard("past") || obstacleCard || presentCard;
+      text = "You asked why, and the root the cards point to sits in " + name(root) + ": " + kw(root) + ". " +
+        "That is the cause underneath the surface explanation. The section on that card below unpacks it, and " + name(adviceCard) + " tells you what actually changes it, because a true 'why' is only useful once it becomes a 'what now': " + adviceOf(adviceCard);
+      break;
+    }
+    case "state": {
+      const ask = parsed.restated ? "You asked: " + parsed.restated + "? " : "";
+      let lean;
+      if (yesScore >= 0.66) lean = "The cards' read of the situation leans yes: the present energy, shown by " + name(presentCard) + ", carries " + kw(presentCard) + ", which points in the direction your question suspects.";
+      else if (yesScore <= 0.34) lean = "The cards' read of the situation leans no: the present energy, shown by " + name(presentCard) + ", carries " + kw(presentCard) + ", which does not support what your question suspects.";
+      else lean = "The cards' read is genuinely mixed: " + name(presentCard) + " shows " + kw(presentCard) + " at the center, which neither confirms nor clears what your question suspects.";
+      text = ask + lean + " One honest caution: tarot reads energies and undercurrents, not verified facts. For a question like this, treat the cards as a prompt for what to look at and what to ask, never as evidence on their own. " +
+        name(adviceCard) + " gives the wisest next step either way: " + adviceOf(adviceCard);
+      break;
+    }
+    default: {
+      text = "The heart of the cards' reply to you: right now the situation truly is " + kw(presentCard) + " (" + name(presentCard) + "), the most useful thing you can do is this, from " + name(adviceCard) + ": " + adviceOf(adviceCard) +
+        " And the direction it is all moving is shown by " + name(futureCard) + ": " + kw(futureCard) + ". The full reasoning follows card by card.";
+    }
+  }
+  return { title: "✦ The Cards' Answer", text };
+}
+
+// A scannable plain-language digest of the whole reading
+function buildPlainSummary(parsed, drawn, spread) {
+  const rows = [];
+  const name = d => d.card.name + (d.orient === "rev" ? " reversed" : "");
+  const firstSentence = (d, topic) => {
+    const m = d.card.meanings[topic] || d.card.meanings.general;
+    const t = d.orient === "up" ? m.up : m.rev;
+    const i = t.indexOf(". ");
+    return i > 20 ? t.slice(0, i + 1) : t;
+  };
+  const lensCard = lens => {
+    const i = spread.positions.findIndex(p => p.lens === lens);
+    return i >= 0 ? { d: drawn[i] } : null;
+  };
+  return function (topic) {
+    const present = lensCard("present") || lensCard("core") || { d: drawn[0] };
+    rows.push({ label: "What is really going on", text: name(present.d) + ". " + firstSentence(present.d, topic) });
+    const obstacle = lensCard("obstacle") || lensCard("hidden");
+    if (obstacle) rows.push({ label: "What stands in the way", text: name(obstacle.d) + ". " + firstSentence(obstacle.d, topic) });
+    const advice = lensCard("advice");
+    const adv = advice ? advice.d : drawn.reduce((a, b) => polOf(b) > polOf(a) ? b : a);
+    rows.push({ label: "What to do about it", text: name(adv) + ". " + (adv.orient === "up" ? adv.card.advice.up : adv.card.advice.rev) });
+    if (drawn.length > 1) {
+      const fut = lensCard("outcome") || lensCard("future") || { d: drawn[drawn.length - 1] };
+      rows.push({ label: "Where it is heading", text: name(fut.d) + ". " + firstSentence(fut.d, topic) });
+      if (parsed && parsed.intent === "when") rows.push({ label: "On timing", text: "The tempo of the deciding card is " + timingOf(fut.d.card) + "." });
+    }
+    return rows;
+  };
+}
+
+// ------------------------------------------------------------
 // Spreads
 // ------------------------------------------------------------
 const SPREADS = {
@@ -401,11 +626,14 @@ function suggestSpread(question, topic) {
 // ------------------------------------------------------------
 function buildReading(question, topic, spreadKey, drawn) {
   const spread = SPREADS[spreadKey];
+  const parsed = parseQuestion(question);
   const reading = {
     question, topic, spreadKey,
     date: new Date().toISOString(),
     opening: openingParagraph(drawn, spread, topic, question),
     guide: openingGuide(spread, topic),
+    answer: spreadKey === "yesno" ? null : buildDirectAnswer(parsed, drawn, spread, topic),
+    plain: buildPlainSummary(parsed, drawn, spread)(topic),
     flow: flowParagraph(drawn, spread),
     cards: drawn.map((d, i) => {
       const pos = spread.positions[i];
@@ -428,7 +656,12 @@ function buildReading(question, topic, spreadKey, drawn) {
     synthesis: synthesize(drawn, spread, topic),
     tone: overallTone(drawn).key
   };
-  if (spreadKey === "yesno") reading.verdict = yesNoVerdict(drawn);
+  if (spreadKey === "yesno") {
+    reading.verdict = yesNoVerdict(drawn);
+    if (parsed.restated) {
+      reading.verdict.text = "You asked: " + parsed.restated + "? " + reading.verdict.text;
+    }
+  }
 
   const adviceIdx = spread.positions.findIndex(p => p.lens === "advice");
   let guideCard;

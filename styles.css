@@ -213,6 +213,35 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
   max-width: 720px; margin: 0 auto 30px; text-align: center;
   color: var(--ink-dim); font-size: 0.98rem;
 }
+.direct-answer {
+  max-width: 760px; margin: 0 auto 26px;
+  background: linear-gradient(160deg, #2f2450, var(--panel));
+  border: 1px solid var(--gold); border-radius: 16px; padding: 26px 30px;
+  box-shadow: 0 8px 30px rgba(212,175,106,0.12);
+}
+.direct-answer h4 {
+  font-family: var(--display); font-weight: 500; color: var(--gold-bright);
+  font-size: 1.15rem; letter-spacing: 0.08em; margin-bottom: 10px;
+}
+.direct-answer p { color: var(--ink); font-size: 1.08rem; }
+
+.plain-words {
+  background: var(--panel); border: 1px solid rgba(212,175,106,0.35);
+  border-radius: 18px; padding: 30px; margin-bottom: 30px;
+}
+.plain-words h2 { font-family: var(--display); font-weight: 500; color: var(--gold-bright); font-size: 1.4rem; margin-bottom: 8px; }
+.pw-row { display: flex; gap: 18px; padding: 12px 0; border-top: 1px solid rgba(139,111,208,0.18); }
+.pw-row:first-of-type { border-top: none; }
+.pw-label {
+  flex: 0 0 190px; font-family: var(--display); font-size: 0.75rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gold); padding-top: 3px;
+}
+.pw-text { flex: 1; color: var(--ink); }
+@media (max-width: 720px) {
+  .pw-row { flex-direction: column; gap: 4px; }
+  .pw-label { flex: none; }
+}
+
 .reading-flow {
   max-width: 760px; margin: 0 auto 34px; background: var(--panel);
   border: 1px solid rgba(139,111,208,0.3); border-radius: 16px; padding: 22px 26px;

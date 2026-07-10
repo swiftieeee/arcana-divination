@@ -174,7 +174,77 @@ function renderResult(r) {
   html += '<div class="sanshi-panel"><h3>前世 · Past Life</h3><p>' + esc(r.sanshi.past) + "</p></div>";
   html += '<div class="sanshi-panel now"><h3>今生 · This Life</h3><p>' + esc(r.sanshi.present) + "</p></div>";
   html += '<div class="sanshi-panel"><h3>来世 · Next Life</h3><p>' + esc(r.sanshi.next) + "</p></div>";
+  html += "</div>";
+
+  // 皇帝身命: which part of the Emperor's body
+  const hourBr = r.hourKnown ? r.pillars[3].branch : null;
+  const eb = emperorBody(r.pillars[1].branch, hourBr);
+  html += '<div class="sanshi-sub"><h3>身命 · Born on the Emperor\'s Body</h3>';
+  if (eb) {
+    html += '<p class="sanshi-lookup">Looked up by your season of birth (' + eb.season + ', by the solar terms) crossed with your birth hour: you were born on <strong>' + eb.part.cn + " · " + esc(eb.part.en) + "</strong>.</p>";
+    html += "<p>" + esc(eb.part.text) + "</p>";
+  } else {
+    html += '<p>This lookup crosses your season of birth with your birth hour, and your birth hour is unknown. Enter your hour of birth to see which part of the Emperor\'s body you were born on.</p>';
+  }
+  html += "</div>";
+
+  // 称骨: bone weight
+  const cg = chengGu(r.pillars[0].stem, r.pillars[0].branch, r.lunar.month, r.lunar.day, hourBr);
+  html += '<div class="sanshi-sub"><h3>称骨 · The Weight of Your Bones</h3>';
+  html += '<p class="sanshi-lookup">By the Tang dynasty master 袁天罡\'s bone-weighing method: year ' + cg.yearGz + " weighs " + (cg.parts.year / 10) + " 两, lunar month " + r.lunar.month + " weighs " + (cg.parts.month / 10) + " 两, day " + r.lunar.day + " weighs " + (cg.parts.day / 10) + " 两" + (cg.total !== null ? ", and your hour weighs " + (cg.parts.hour / 10) + " 两." : ".") + "</p>";
+  if (cg.total !== null) {
+    html += '<div class="chenggu-weight">Your bones weigh <strong>' + cg.weightCn + "</strong></div>";
+    if (cg.verse) html += '<p class="chenggu-verse">' + esc(cg.verse) + "</p>";
+    if (cg.band) {
+      html += '<p><strong>' + esc(cg.band.grade) + ".</strong> " + esc(cg.band.life) + "</p>";
+      html += "<p>" + esc(cg.band.late) + "</p>";
+    }
+    html += '<p class="sanshi-note">' + esc(CHENGGU_NOTE) + "</p>";
+  } else {
+    html += '<p>Your three known weights total ' + cg.partialCn + ". The hour adds between 六钱 and 一两六钱 more; enter your birth hour for the full weighing and its verse.</p>";
+  }
+  html += "</div>";
+
+  // 受生债: the debt of receiving life
+  const ss = shouShengDebt(r.pillars[0].branch, hourBr);
+  html += '<div class="sanshi-sub"><h3>受生债 · The Debt Your Past Life Left</h3>';
+  html += "<p>" + esc(SHOUSHENG_EXPLAIN.what) + "</p>";
+  html += '<p class="sanshi-lookup">By the scripture\'s table, one born in a ' + ss.branchCn + " year owes <strong>" + ss.qian + " (" + esc(ss.qianEn) + ")</strong>, payable to <strong>" + ss.ku + "</strong>, whose presiding official is <strong>曹官姓" + ss.surname + "</strong>" + (ss.hourDebt ? ", and your birth hour adds a further " + ss.hourDebt : "") + ".</p>";
+  html += "<p>" + esc(SHOUSHENG_EXPLAIN.how) + "</p>";
   html += "</div></div>";
+
+  // 流年: this year against your chart
+  const ln = liuNian(r);
+  html += '<div class="synthesis liunian"><h2>流年 ' + ln.year + " · This Year Against Your Chart</h2>";
+  html += '<p class="synth-intro">The current year is ' + ln.gz + ", the year of the " + ln.zodiacEn + " " + ln.zodiacCn + ". Measured against your birth year branch, your standing with this year\'s Tai Sui (太岁, the year god):</p>";
+  for (const rel of ln.relations) {
+    html += '<div class="synth-note"><h4>' + (ln.afflicted ? "⚠ " : "✦ ") + rel.cn + " · " + esc(rel.en) + "</h4><p>" + esc(rel.mean) + "</p>";
+    html += '<p><strong>The good this year favors:</strong> ' + esc(rel.good) + "</p>";
+    html += '<p><strong>The bad to watch for:</strong> ' + esc(rel.bad) + "</p>";
+    html += '<p><strong>To avoid:</strong> ' + esc(rel.avoid) + "</p></div>";
+  }
+  const en = ln.elementNote;
+  html += '<div class="synth-note"><h4>✦ The year\'s elements against your chart</h4><p>' +
+    "This year carries " + ELEMENTS[en.yearElement].en + " " + ELEMENTS[en.yearElement].cn + " in its stem and " + ELEMENTS[en.branchElement].en + " " + ELEMENTS[en.branchElement].cn + " in its branch. " +
+    (en.favHits.length ? "That includes your favorable element" + (en.favHits.length > 1 ? "s" : "") + " (" + en.favHits.map(e => ELEMENTS[e].en).join(", ") + "), so the year's raw material genuinely works for you: press forward in the matters those elements govern. " : "") +
+    (en.avoidHits.length ? "That includes element" + (en.avoidHits.length > 1 ? "s" : "") + " your chart prefers to avoid (" + en.avoidHits.map(e => ELEMENTS[e].en).join(", ") + "), so pace yourself in the matters those elements govern and lean harder on your favorable colors, directions and fields this year. " : "") +
+    (!en.favHits.length && !en.avoidHits.length ? "Neither your favorable nor unfavorable elements dominate the year, an elementally neutral year in which your own conduct writes most of the story. " : "") + "</p></div>";
+  if (ln.taisui) {
+    html += '<div class="synth-note"><h4>✦ This year\'s Tai Sui: ' + esc(ln.taisui.general) + "</h4><p>" + esc(ln.taisui.lore) + "</p></div>";
+  }
+  html += "</div>";
+
+  // Prayer and ritual guidance
+  html += '<div class="synthesis prayer"><h2>祈福指南 · How to Pray This Year</h2>';
+  html += '<div class="synth-note"><h4>✦ ' + esc(PRAYER_GUIDE.taisui.title) + "</h4><p>" + esc(PRAYER_GUIDE.taisui.text) + "</p></div>";
+  html += '<div class="synth-note"><h4>✦ ' + esc(PRAYER_GUIDE.deities.title) + "</h4>";
+  for (const [matter, guide] of PRAYER_GUIDE.deities.rows) {
+    html += '<p><strong>' + esc(matter) + ":</strong> " + esc(guide) + "</p>";
+  }
+  html += "</div>";
+  html += '<div class="synth-note"><h4>✦ ' + esc(PRAYER_GUIDE.ritual.title) + "</h4><p>" + esc(PRAYER_GUIDE.ritual.text) + "</p></div>";
+  html += '<p class="sanshi-note">These are folk and Daoist traditions offered for cultural practice and reflection. Sincerity, kindness and good deeds are the one ingredient every tradition agrees on.</p>';
+  html += "</div>";
 
   html += '<div class="reading-actions">' +
     '<button class="btn-primary" onclick="newChart()">New Chart</button>' +

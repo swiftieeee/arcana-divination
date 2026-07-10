@@ -450,6 +450,21 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
 .sanshi-panel h3 { font-family: var(--display); font-weight: 500; font-size: 1rem; color: var(--gold); letter-spacing: 0.08em; margin-bottom: 8px; }
 .sanshi-panel p { color: var(--ink); font-size: 0.97rem; }
 
+.sanshi-sub { border-top: 1px solid rgba(212,175,106,0.3); margin-top: 24px; padding-top: 22px; }
+.sanshi-sub h3 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; color: var(--gold-bright); letter-spacing: 0.06em; margin-bottom: 10px; }
+.sanshi-sub p { color: var(--ink); margin-bottom: 12px; }
+.sanshi-lookup { color: var(--ink-dim); font-style: italic; }
+.sanshi-note { color: #8d82ad; font-size: 0.9rem; font-style: italic; }
+.chenggu-weight {
+  font-family: var(--display); font-size: 1.5rem; color: var(--gold-bright);
+  text-align: center; margin: 14px 0; letter-spacing: 0.08em;
+}
+.chenggu-verse {
+  font-family: "Noto Serif SC", var(--serif); color: var(--gold); text-align: center;
+  font-size: 1.12rem; line-height: 2; margin-bottom: 14px;
+}
+.liunian h2, .prayer h2 { margin-bottom: 14px; }
+
 /* Responsive */
 @media (max-width: 720px) {
   body { font-size: 17px; }

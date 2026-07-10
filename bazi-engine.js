@@ -185,3 +185,98 @@ function computeBazi(y, m, d, hour, gender) {
     sanshi: { key: sanshiKey, digit, lunarMonth: lunar.lMonth, ...sanshi }
   };
 }
+
+// ============================================================
+// Deep 三世书 extensions: 皇帝身命, 称骨, 受生债, 流年太岁
+// ============================================================
+
+// Season from the BaZi month branch (solar term boundaries):
+// 寅卯辰 spring, 巳午未 summer, 申酉戌 autumn, 亥子丑 winter
+function seasonOfMonthBranch(mb) {
+  if ([2, 3, 4].includes(mb)) return "spring";
+  if ([5, 6, 7].includes(mb)) return "summer";
+  if ([8, 9, 10].includes(mb)) return "autumn";
+  return "winter";
+}
+
+function emperorBody(monthBranch, hourBranch) {
+  if (hourBranch === null || hourBranch === undefined) return null;
+  const season = seasonOfMonthBranch(monthBranch);
+  const partKey = EMPEROR_TABLE[season][hourBranch];
+  return { season, partKey, part: EMPEROR_PARTS[partKey] };
+}
+
+// 称骨: bone weight in 钱. Needs the BaZi year ganzhi + lunar month/day + hour.
+function chengGu(yearStem, yearBranch, lunarMonth, lunarDay, hourBranch) {
+  const gz = STEM_CN[yearStem] + BRANCH_CN[yearBranch];
+  const y = CHENGGU_YEAR[gz];
+  const m = CHENGGU_MONTH[lunarMonth - 1];
+  const d = CHENGGU_DAY[Math.min(lunarDay, 30) - 1];
+  const partial = y + m + d;
+  const h = (hourBranch === null || hourBranch === undefined) ? null : CHENGGU_HOUR[hourBranch];
+  const total = h === null ? null : partial + h;
+  const weightCn = w => Math.floor(w / 10) + "两" + (w % 10 ? (w % 10) + "钱" : "");
+  let band = null, verse = null;
+  if (total !== null) {
+    const t = Math.max(21, Math.min(72, total));
+    verse = CHENGGU_VERSES[t] || null;
+    band = CHENGGU_BANDS.find(b => t >= b.min && t <= b.max) || null;
+  }
+  return { yearGz: gz, parts: { year: y, month: m, day: d, hour: h }, partial, total,
+           weightCn: total !== null ? weightCn(total) : null,
+           partialCn: weightCn(partial), verse, band };
+}
+
+// 受生债 by natal year branch (+ hour surcharge)
+function shouShengDebt(yearBranch, hourBranch) {
+  const row = SHOUSHENG_DEBT[yearBranch];
+  return { ...row, branchCn: BRANCH_CN[yearBranch],
+           hourDebt: (hourBranch === null || hourBranch === undefined) ? null : SHOUSHENG_HOUR[hourBranch] };
+}
+
+// Branch relation sets for 流年
+const CHONG_PAIR = b => (b + 6) % 12;                       // 六冲
+const LIUHE = { 0: 1, 1: 0, 2: 11, 11: 2, 3: 10, 10: 3, 4: 9, 9: 4, 5: 8, 8: 5, 6: 7, 7: 6 }; // 六合
+const HAI = { 0: 7, 7: 0, 1: 6, 6: 1, 2: 5, 5: 2, 3: 4, 4: 3, 8: 11, 11: 8, 9: 10, 10: 9 };   // 六害
+const PO = { 0: 9, 9: 0, 3: 6, 6: 3, 1: 4, 4: 1, 7: 10, 10: 7, 2: 11, 11: 2, 5: 8, 8: 5 };    // 六破
+const SANHE = [[8, 0, 4], [11, 3, 7], [2, 6, 10], [5, 9, 1]];                                   // 三合 groups
+const XING_GROUPS = [[2, 5, 8], [1, 10, 7], [0, 3]];        // 三刑 + 子卯刑
+const ZIXING = [4, 6, 9, 11];                                // 自刑: 辰午酉亥
+
+function taiSuiRelation(natalBranch, yearBranch) {
+  if (natalBranch === yearBranch) {
+    // 值太岁; some branches also self-punish in their own year
+    return ZIXING.includes(natalBranch) ? ["zhi", "xing"] : ["zhi"];
+  }
+  if (CHONG_PAIR(natalBranch) === yearBranch) return ["chong"];
+  const rels = [];
+  for (const g of XING_GROUPS) if (g.includes(natalBranch) && g.includes(yearBranch)) rels.push("xing");
+  if (HAI[natalBranch] === yearBranch) rels.push("hai");
+  if (PO[natalBranch] === yearBranch) rels.push("po");
+  if (rels.length) return rels;
+  if (LIUHE[natalBranch] === yearBranch) return ["he"];
+  for (const g of SANHE) if (g.includes(natalBranch) && g.includes(yearBranch)) return ["he"];
+  return ["none"];
+}
+
+// 流年 assessment for the current calendar year against the natal chart
+function liuNian(natal, today) {
+  const now = today || new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+  const currentBaziYear = baziYearOf(y, m, d);
+  const yp = yearPillar(currentBaziYear);
+  const gz = STEM_CN[yp.stem] + BRANCH_CN[yp.branch];
+  const rels = taiSuiRelation(natal.pillars[0].branch, yp.branch);
+  const yearElement = STEMS[yp.stem].element;
+  const branchElement = BRANCHES[yp.branch].element;
+  const favHits = [yearElement, branchElement].filter(e => natal.favorable.includes(e));
+  const avoidHits = [yearElement, branchElement].filter(e => natal.avoid.includes(e));
+  return {
+    year: currentBaziYear, gz, stem: yp.stem, branch: yp.branch,
+    zodiacEn: BRANCHES[yp.branch].zodiacEn, zodiacCn: BRANCHES[yp.branch].zodiacCn,
+    relations: rels.map(r => TAISUI_RELATIONS[r]),
+    afflicted: rels.some(r => ["zhi", "chong", "xing", "hai", "po"].includes(r)),
+    elementNote: { yearElement, branchElement, favHits, avoidHits },
+    taisui: TAISUI_INFO[gz] || null
+  };
+}

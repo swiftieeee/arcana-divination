@@ -235,3 +235,54 @@ const PRAYER_GUIDE = {
   ritual: { title: "A simple household practice 家常祈福",
     text: "For any of the above without a temple trip: choose a clean morning on a 初一 or 十五, wash hands and face, light one or three sticks of incense (never two or four), face the appropriate direction (South for this year's Tai Sui, East for family health, your personal favorable direction for wealth), state your name and birth date, speak the matter plainly and without bargaining, bow three times, and let the incense burn out undisturbed. Follow within the week with one concrete good deed done quietly in the same cause: the tradition is unanimous that heaven audits the deed, not the incense. Do this consistently rather than dramatically; the calendar's rhythm (初一 and 十五, monthly) matters more than any single grand gesture." }
 };
+
+// ------------------------------------------------------------
+// 本命佛: the eight zodiac guardian deities. Indexed by year branch.
+// This is the authentic Chinese Buddhist patron system: every person
+// has ONE lifelong guardian determined by their zodiac.
+// ------------------------------------------------------------
+const BENMING_FO = [
+  { cn: "千手观音菩萨", en: "Thousand-Armed Guanyin", zodiac: "Rat 鼠",
+    text: "Your lifelong guardian is Thousand-Armed Guanyin, the form of the Compassionate One with a hand for every kind of trouble. Rats are quick, resourceful and often carry more quiet anxiety than they show; this guardian's specialty is exactly that: help arriving through many channels at once, and calm restored to a busy mind. Pray to her when scattered, overloaded or facing troubles on several fronts at the same time." },
+  { cn: "虚空藏菩萨", en: "Akasagarbha Bodhisattva", zodiac: "Ox 牛",
+    text: "Your lifelong guardian is Akasagarbha, keeper of the treasury of empty space, whose wealth is boundless because it is stored in the void itself. Oxen build slowly and worry about scarcity; this guardian's gift is the opposite lesson: memory, wisdom and resources that do not run out. Pray to him before study, exams, and any long undertaking that needs endurance funded by faith." },
+  { cn: "虚空藏菩萨", en: "Akasagarbha Bodhisattva", zodiac: "Tiger 虎",
+    text: "Your lifelong guardian is Akasagarbha, keeper of the treasury of empty space. Tigers leap first and count the cost midair; this guardian holds the inexhaustible reserves that make bold lives sustainable: wisdom before the leap, resources after it. Pray to him before major risks and new ventures, and when courage needs a floor under it." },
+  { cn: "文殊菩萨", en: "Manjusri Bodhisattva", zodiac: "Rabbit 兔",
+    text: "Your lifelong guardian is Manjusri, the Bodhisattva of Great Wisdom, who rides a lion and carries the sword that cuts through confusion. Rabbits are gentle, perceptive and prone to overthinking in the dark; Manjusri's sword is for precisely those tangles. Pray to him before decisions, studies and examinations, and whenever the mind circles a problem without landing." },
+  { cn: "普贤菩萨", en: "Samantabhadra Bodhisattva", zodiac: "Dragon 龙",
+    text: "Your lifelong guardian is Samantabhadra, the Bodhisattva of Great Action, who turns vows into deeds on the back of a six-tusked elephant. Dragons dream at scale; this guardian's whole teaching is that greatness is finished, not just envisioned. Pray to him when a plan needs to become a schedule, and when the distance between your ambition and your progress starts to ache." },
+  { cn: "普贤菩萨", en: "Samantabhadra Bodhisattva", zodiac: "Snake 蛇",
+    text: "Your lifelong guardian is Samantabhadra, the Bodhisattva of Great Action. Snakes are strategists who can plan in the dark for years; this guardian blesses the moment strategy must surface and act. Pray to him when it is time to move from knowing to doing, and for steadiness in long undertakings whose results ripen slowly." },
+  { cn: "大势至菩萨", en: "Mahasthamaprapta Bodhisattva", zodiac: "Horse 马",
+    text: "Your lifelong guardian is Mahasthamaprapta, the Bodhisattva of Great Strength, whose light gives beings the power to keep going. Horses run on passion and risk running dry; this guardian's specialty is stamina of the spirit: strength that arrives quietly, exactly when yours runs out. Pray to him when enthusiasm fades mid-course, and for protection on journeys and in years of heavy movement." },
+  { cn: "大日如来", en: "Vairocana Buddha", zodiac: "Goat 羊",
+    text: "Your lifelong guardian is Vairocana, the Great Sun Buddha, the light at the center from which all directions radiate. Goats are gentle and easily dimmed by harsh company; this guardian restores the inner daylight: clarity, warmth and the confidence of being seen. Pray to him when confidence thins, when the path forward is unclear, and at every genuine new beginning." },
+  { cn: "大日如来", en: "Vairocana Buddha", zodiac: "Monkey 猴",
+    text: "Your lifelong guardian is Vairocana, the Great Sun Buddha, the still light at the center of all movement. Monkeys are brilliant and everywhere at once; this guardian is the center that keeps brilliance from scattering. Pray to him for focus, for integrity under temptation, and whenever cleverness needs to ripen into wisdom." },
+  { cn: "不动尊菩萨", en: "Acala, the Immovable One", zodiac: "Rooster 鸡",
+    text: "Your lifelong guardian is Acala, the Immovable Wisdom King, wreathed in flame, unshakeable in the face of every obstacle. Roosters hold high standards in a world that keeps missing them; Acala's gift is resolve that does not crack and anger that converts to resolve instead of corrosion. Pray to him when opposition mounts, when discipline falters, and when you must hold a line others keep testing." },
+  { cn: "阿弥陀佛", en: "Amitabha Buddha", zodiac: "Dog 狗",
+    text: "Your lifelong guardian is Amitabha, Buddha of Infinite Light and Infinite Life, lord of the Pure Land. Dogs give loyalty in a world that does not always return it; Amitabha's vow is the ultimate returned loyalty: no sincere call to him goes unanswered. Pray to him for peace of heart, for the wellbeing of those you love and have lost, and in any season of grief or worry." },
+  { cn: "阿弥陀佛", en: "Amitabha Buddha", zodiac: "Pig 猪",
+    text: "Your lifelong guardian is Amitabha, Buddha of Infinite Light and Infinite Life. Pigs are openhearted and sometimes wounded by their own generosity; Amitabha receives every sincere heart exactly as it is. Pray to him for serenity, for protection of your good nature in rough company, and for the long peace of your household." }
+];
+
+// Matter deities, selected per chart rather than listed wholesale
+const MATTER_DEITIES = {
+  wealth: { deity: "财神 (God of Wealth)", how: "Offer on 初一 and 十五, and especially on the fifth day of the first lunar month, his festival. State the venture plainly; he is traditionally said to favor requests tied to honest, named endeavors over vague wishes for riches." },
+  career: { deity: "文昌帝君 (Wenchang, patron of careers and study)", how: "Offer fresh water and greens, and place a written, dated statement of the goal under the incense holder. Best on mornings before decisive workdays, applications or examinations." },
+  love: { deity: "月老 (the Matchmaker under the Moon)", how: "Visit with a red string and speak the sincere wish; tradition holds that describing the kind of bond works better than naming a person. Tie the string where the temple provides." },
+  health: { deity: "药师佛 (Medicine Buddha)", how: "Offer clean water and light, and speak the health matter plainly, whether yours or a family member's. His practice pairs prayer with actually following the treatment; the tradition is unsentimental about that." },
+  travel: { deity: "妈祖 (Mazu, protector of travelers)", how: "The patroness of those whose fortune lies away from home. Pray before departures, relocations and ventures abroad; keep a small token of her from a temple visit with your travel documents." },
+  karma: { deity: "地藏王菩萨 (Kṣitigarbha)", how: "Lord of the underworld's mercy, the fastest route for merit dedicated to past-life debts and ancestors. Offer on 初一/十五, dedicate one concrete good deed to the debt each month, and pair with the 受生债 repayment above." },
+  peace: { deity: "观音菩萨 (Guanyin)", how: "The all-purpose compassionate ear. Offer on her festival days, the nineteenth of the second, sixth and ninth lunar months, and whenever the household needs settling. Plain words, spoken quietly, are her preferred offering." }
+};
+
+// Which matter each 三世书 category most needs prayed over
+const SANSHI_CONCERN = {
+  "天": ["peace", "karma"], "向": ["wealth", "career"], "煞": ["career", "peace"],
+  "才": ["career", "health"], "旺": ["wealth", "peace"], "暗": ["peace", "love"],
+  "病": ["health", "career"], "正": ["wealth", "love"], "逐": ["peace", "karma"],
+  "背": ["travel", "wealth"], "耗": ["wealth", "karma"], "困": ["peace", "health"]
+};

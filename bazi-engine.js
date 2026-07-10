@@ -280,3 +280,56 @@ function liuNian(natal, today) {
     taisui: TAISUI_INFO[gz] || null
   };
 }
+
+// ------------------------------------------------------------
+// Personalized prayer plan: guardian by zodiac, matters by the
+// chart's own 三世书 category and weakest element, Tai Sui only
+// when actually afflicted.
+// ------------------------------------------------------------
+function prayerPlan(r, ln) {
+  const yearBranch = r.pillars[0].branch;
+  const guardian = BENMING_FO[yearBranch];
+  const concerns = SANSHI_CONCERN[r.sanshi.key] || ["peace"];
+  // Weakest element adds its own concern
+  const sorted = Object.entries(r.tally).sort((a, b) => a[1] - b[1]);
+  const weakest = sorted[0][0];
+  const elementConcern = { water: "peace", fire: "career", wood: "career", earth: "peace", metal: "career" }[weakest];
+  const matterKeys = [...new Set([...concerns, elementConcern])].slice(0, 2);
+  const matters = matterKeys.map(k => ({ key: k, ...MATTER_DEITIES[k] }));
+  const favEl = r.favorable[0];
+  const favInfo = ELEMENTS[favEl];
+  return {
+    guardian, matters,
+    afflicted: ln.afflicted,
+    relationCn: ln.relations.map(x => x.cn).join(" 兼 "),
+    household: "Your own auspicious setup, from your chart rather than anyone else's: your first favorable element is " + favInfo.en + " " + favInfo.cn +
+      ", so face " + favInfo.directions + " when you pray at home, wear or carry " + favInfo.colors +
+      " on days that matter, and keep your small altar or quiet corner on the " + favInfo.directions + " side of your home. Offer on 初一 and 十五 mornings: wash hands and face, light one or three sticks of incense (never two or four), say your name and birth date, speak the matter plainly without bargaining, bow three times, and let the incense finish undisturbed. Then, within the week, do one concrete good deed in the same cause. The tradition is unanimous that heaven audits the deed, not the incense."
+  };
+}
+
+// ------------------------------------------------------------
+// A humanized plain-language summary of the whole chart
+// ------------------------------------------------------------
+function plainChartSummary(r, ln, eb, cg) {
+  const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+  const dm = r.dayMaster;
+  const dmTitle = dm.profile.title.replace(/\s*\([^)]*\)$/, "");
+  const zodiac = r.lunar.zodiac;
+  const favNames = r.favorable.map(e => ELEMENTS[e].en + " " + ELEMENTS[e].cn).join(" and ");
+  const rows = [];
+  const art = /^[AEIOU]/.test(zodiac.zodiacEn) ? "An " : "A ";
+  rows.push({ label: "Who you are", text: art + zodiac.zodiacEn + " " + zodiac.zodiacCn + " by year, and at your core " + dmTitle +
+    ": " + STEMS[dm.stem].cn + " " + STEMS[dm.stem].pinyin + " " + ELEMENTS[dm.element].en + ", born " + (r.strong ? "strong" : "gentle") +
+    ". " + dm.profile.text.split(". ").slice(1, 2).join(". ") + "." });
+  rows.push({ label: "Your money story", text: r.sanshi.cn + ", " + r.sanshi.theme.split("·")[1].trim() +
+    ". " + r.sanshi.present.split(". ").slice(0, 2).join(". ") + "." });
+  if (eb) rows.push({ label: "Your place at court", text: "Born on " + eb.part.cn + ", " + eb.part.en.toLowerCase() +
+    ". " + cap(eb.part.text.split(": ")[1].split(". ")[0]) + "." });
+  if (cg && cg.total !== null && cg.band) rows.push({ label: "The weight of your bones", text: cg.weightCn + ", " + cg.band.grade +
+    ". " + cap(cg.band.life.split(". ")[1]) + "." });
+  const relMain = ln.relations[0];
+  rows.push({ label: "This year, " + ln.year, text: (ln.afflicted ? "A year to walk carefully: " : "A workable year: ") + relMain.cn + ", " + relMain.en.toLowerCase() +
+    ". " + relMain.avoid.split(", ")[0] + ", and lean on your favorable elements, " + favNames + ", in colors, directions and choices." });
+  return rows;
+}

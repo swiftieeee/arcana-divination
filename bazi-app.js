@@ -92,6 +92,17 @@ function renderResult(r) {
   html += '<p class="reading-guide">Reading the pillars: the top character of each pillar is a Heavenly Stem (天干) and the lower one an Earthly Branch (地支). The stem of your Day Pillar is your Day Master (日主), the character that represents you; everything else in the chart is read in relation to it. Your Day Master is <strong>' +
     dmName + ", " + ELEMENTS[r.dayMaster.element].en + " " + ELEMENTS[r.dayMaster.element].cn + "</strong>.</p>";
 
+  // Humanized plain-words summary, before the deep sections
+  const lnEarly = liuNian(r);
+  const ebEarly = emperorBody(r.pillars[1].branch, r.hourKnown ? r.pillars[3].branch : null);
+  const cgEarly = chengGu(r.pillars[0].stem, r.pillars[0].branch, r.lunar.month, r.lunar.day, r.hourKnown ? r.pillars[3].branch : null);
+  const plainRows = plainChartSummary(r, lnEarly, ebEarly, cgEarly);
+  html += '<div class="plain-words"><h2>Your Chart in Plain Words</h2><p class="synth-intro">The whole reading in one glance; everything below explains and deepens each line:</p>';
+  for (const row of plainRows) {
+    html += '<div class="pw-row"><div class="pw-label">' + esc(row.label) + '</div><div class="pw-text">' + esc(row.text) + "</div></div>";
+  }
+  html += "</div>";
+
   // Day master reading
   html += '<div class="synthesis"><h2>Your Day Master: ' + esc(r.dayMaster.profile.title) + "</h2>";
   html += "<p>" + esc(r.dayMaster.profile.text) + "</p></div>";
@@ -234,15 +245,20 @@ function renderResult(r) {
   }
   html += "</div>";
 
-  // Prayer and ritual guidance
-  html += '<div class="synthesis prayer"><h2>祈福指南 · How to Pray This Year</h2>';
-  html += '<div class="synth-note"><h4>✦ ' + esc(PRAYER_GUIDE.taisui.title) + "</h4><p>" + esc(PRAYER_GUIDE.taisui.text) + "</p></div>";
-  html += '<div class="synth-note"><h4>✦ ' + esc(PRAYER_GUIDE.deities.title) + "</h4>";
-  for (const [matter, guide] of PRAYER_GUIDE.deities.rows) {
-    html += '<p><strong>' + esc(matter) + ":</strong> " + esc(guide) + "</p>";
+  // Prayer and ritual guidance, personalized to this chart
+  const pp = prayerPlan(r, ln);
+  html += '<div class="synthesis prayer"><h2>祈福指南 · Your Personal Prayer Plan</h2>';
+  html += '<p class="synth-intro">Not a generic list: your guardian comes from your zodiac, your matters come from your own 三世书 fortune and your chart\'s weakest element, and your directions and colors come from your favorable elements.</p>';
+  html += '<div class="synth-note"><h4>✦ Your lifelong guardian 本命佛: ' + pp.guardian.cn + " · " + esc(pp.guardian.en) + "</h4><p>" + esc(pp.guardian.text) + "</p></div>";
+  if (pp.afflicted) {
+    html += '<div class="synth-note"><h4>⚠ This year, 拜太岁 comes first</h4><p>Because your zodiac stands in ' + pp.relationCn + " with this year's Tai Sui, the year's first observance is his: " + esc(PRAYER_GUIDE.taisui.text) + "</p></div>";
+  } else {
+    html += '<div class="synth-note"><h4>✦ Your zodiac is at peace with this year\'s Tai Sui</h4><p>No 拜太岁 is required of you this year. A single respectful acknowledgement at new year, if you visit a temple anyway, is a courtesy, not an obligation. Your prayer energy is better spent on your guardian and the matters below.</p></div>';
   }
-  html += "</div>";
-  html += '<div class="synth-note"><h4>✦ ' + esc(PRAYER_GUIDE.ritual.title) + "</h4><p>" + esc(PRAYER_GUIDE.ritual.text) + "</p></div>";
+  for (const matter of pp.matters) {
+    html += '<div class="synth-note"><h4>✦ For your chart\'s ' + esc(matter.key) + " matters: " + esc(matter.deity) + "</h4><p>" + esc(matter.how) + "</p></div>";
+  }
+  html += '<div class="synth-note"><h4>✦ Your household practice, tuned to your chart</h4><p>' + esc(pp.household) + "</p></div>";
   html += '<p class="sanshi-note">These are folk and Daoist traditions offered for cultural practice and reflection. Sincerity, kindness and good deeds are the one ingredient every tradition agrees on.</p>';
   html += "</div>";
 
